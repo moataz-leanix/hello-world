@@ -1,0 +1,22 @@
+version: "1.0"
+services:
+  - name: my-demo-service
+    externalId: my-demo-service
+    description: |
+      A demo microservice to showcase LeanIX self-built software discovery
+      via CI/CD integration.
+    applications:
+      # Link to an existing Application fact sheet in your workspace.
+      # Replace with a real fact sheet ID from your LeanIX workspace.
+      - factSheetId: "b0db1f4e-ede6-4be7-87dc-0782a0c73ad8"
+    tags:
+      - tagGroupName: "Other tags"
+        tagNames:
+          - "Demo"
+      - tagGroupName: "Environment"
+        tagNames:
+          - "PROD"
+    resources:
+      - type: website
+        url: https://help.sap.com/docs/leanix/ea/manifest-file-and-schema
+        description: "Manifest documentation"
