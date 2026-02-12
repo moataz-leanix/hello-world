@@ -31,6 +31,7 @@ def upload_manifest(auth_header):
             headers={"Authorization": auth_header},
             files={"file": (MANIFEST_FILE, f, "application/yaml")},
         )
+    print(f"Manifest HTTP {response.status_code}: {response.text}")
     response.raise_for_status()
     data = response.json()
     print(f"Manifest response: {json.dumps(data, indent=2)}")
