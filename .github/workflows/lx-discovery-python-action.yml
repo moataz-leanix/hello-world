@@ -1,4 +1,4 @@
-name: LeanIX Manifest Discovery + Document Upload
+name: LeanIX Manifest Discovery + Document Upload (Python)
 
 on:
   push:
