@@ -1,0 +1,123 @@
+name: LeanIX Manifest Discovery + Document Upload
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "leanix.yaml"
+      - "docs/architecture-overview.pdf"
+  workflow_dispatch:
+
+jobs:
+  publish-manifest-and-document:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Get LeanIX access token
+        id: auth
+        run: |
+          RESPONSE=$(curl --silent --request POST \
+            --url "https://${{ secrets.LEANIX_SUBDOMAIN }}.leanix.net/services/mtm/v1/oauth2/token" \
+            --header "Content-Type: application/x-www-form-urlencoded" \
+            --data-urlencode "grant_type=client_credentials" \
+            --data-urlencode "client_id=apitoken" \
+            --data-urlencode "client_secret=${{ secrets.LEANIX_API_TOKEN }}")
+
+          TOKEN=$(echo "$RESPONSE" | jq -r '.access_token')
+
+          if [ "$TOKEN" = "null" ] || [ -z "$TOKEN" ]; then
+            echo "::error::Failed to obtain LeanIX access token"
+            echo "$RESPONSE"
+            exit 1
+          fi
+
+          echo "::add-mask::$TOKEN"
+          echo "token=$TOKEN" >> "$GITHUB_OUTPUT"
+
+      # Step 1: Upload manifest and capture the fact sheet ID from the response
+      - name: Upload manifest to LeanIX
+        id: manifest
+        run: |
+          RESPONSE=$(curl --silent --fail-with-body \
+            --request POST \
+            --url "https://${{ secrets.LEANIX_SUBDOMAIN }}.leanix.net/services/technology-discovery/v1/manifests" \
+            --header "Authorization: Bearer ${{ steps.auth.outputs.token }}" \
+            --header "Cache-Control: no-cache" \
+            --form "manifest=@leanix.yaml")
+
+          echo "Manifest response: $RESPONSE"
+
+          FS_ID=$(echo "$RESPONSE" | jq -r '.data.factSheetId')
+
+          if [ "$FS_ID" = "null" ] || [ -z "$FS_ID" ]; then
+            echo "::error::No factSheetId in manifest response"
+            exit 1
+          fi
+
+          echo "Fact sheet ID: $FS_ID"
+          echo "fact_sheet_id=$FS_ID" >> "$GITHUB_OUTPUT"
+
+      # Step 2: Upload a document to the discovered microservice fact sheet
+      - name: Upload document to fact sheet
+        if: ${{ hashFiles('docs/architecture-overview.pdf') != '' }}
+        run: |
+          FACT_SHEET_ID="${{ steps.manifest.outputs.fact_sheet_id }}"
+
+          QUERY='mutation(
+            $factSheetId: ID!,
+            $name: String!,
+            $description: String,
+            $origin: String,
+            $documentType: String
+          ) {
+            result: createDocument(
+              factSheetId: $factSheetId
+              name: $name
+              description: $description
+              origin: $origin
+              documentType: $documentType
+            ) {
+              id
+              name
+              fileInformation { fileName size mediaType }
+            }
+          }'
+
+          # Build the variables JSON
+          VARIABLES=$(jq -n \
+            --arg fsId "$FACT_SHEET_ID" \
+            --arg name "Architecture Overview" \
+            --arg desc "Auto-uploaded from CI/CD pipeline" \
+            '{
+              factSheetId: $fsId,
+              name: $name,
+              description: $desc,
+              origin: "LX_STORAGE_SERVICE",
+              documentType: "documentation"
+            }')
+
+          # Combine query + variables into the graphQL request payload
+          GQL_REQUEST=$(jq -n \
+            --arg q "$QUERY" \
+            --argjson v "$VARIABLES" \
+            '{ query: $q, variables: $v }')
+
+          RESPONSE=$(curl --silent --fail-with-body \
+            --request POST \
+            --url "https://${{ secrets.LEANIX_SUBDOMAIN }}.leanix.net/services/pathfinder/v1/graphql/upload" \
+            --header "Authorization: Bearer ${{ steps.auth.outputs.token }}" \
+            --form "graphQLRequest=$GQL_REQUEST;type=application/json" \
+            --form "file=@docs/architecture-overview.pdf;type=application/pdf")
+
+          echo "Document upload response: $RESPONSE"
+
+          DOC_ID=$(echo "$RESPONSE" | jq -r '.data.result.id')
+
+          if [ "$DOC_ID" = "null" ] || [ -z "$DOC_ID" ]; then
+            echo "::error::Document upload failed"
+            exit 1
+          fi
+
+          echo "Document uploaded successfully (ID: $DOC_ID)"
