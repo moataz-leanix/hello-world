@@ -26,10 +26,10 @@ def obtain_access_token():
 
 def upload_manifest(auth_header):
     with open(MANIFEST_FILE, "rb") as f:
-        response = requests.post(
+        response = requests.put(
             LEANIX_MANIFEST_URL,
-            headers={"Authorization": auth_header, "Cache-Control": "no-cache"},
-            files={"manifest": (MANIFEST_FILE, f, "application/x-yaml")},
+            headers={"Authorization": auth_header},
+            files={"file": (MANIFEST_FILE, f, "application/yaml")},
         )
     response.raise_for_status()
     data = response.json()
