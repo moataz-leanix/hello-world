@@ -5,7 +5,7 @@ on:
     branches: [main]
     paths:
       - "leanix.yaml"
-      - "docs/architecture-overview.pdf"
+      - "architecture-overview.pdf"
   workflow_dispatch:
 
 jobs:
@@ -61,7 +61,7 @@ jobs:
 
       # Step 2: Upload a document to the discovered microservice fact sheet
       - name: Upload document to fact sheet
-        if: ${{ hashFiles('docs/architecture-overview.pdf') != '' }}
+        if: ${{ hashFiles('architecture-overview.pdf') != '' }}
         run: |
           FACT_SHEET_ID="${{ steps.manifest.outputs.fact_sheet_id }}"
 
