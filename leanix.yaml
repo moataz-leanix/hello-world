@@ -17,8 +17,18 @@ metadata:
       tagNames:
         - PROD
 
+  teams:
+    - factSheetId: 6d82a506-a413-4940-a9ba-8835dff78d87
+    - externalId:
+        id: teamId
+        value: team-002
+        
   resources:
     - name: Manifest documentation
       type: documentation
       url: https://help.sap.com/docs/leanix/ea/manifest-file-and-schema
       description: LeanIX manifest file schema reference
+
+  subscriptions:
+    - email: test@test.com
+      type: OBSERVER
