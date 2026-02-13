@@ -27,5 +27,5 @@ metadata:
       description: LeanIX manifest file schema reference
 
   subscriptions:
-    - email: test@test.com
+    - email: demo@example.com
       type: OBSERVER
