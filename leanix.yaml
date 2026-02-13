@@ -7,7 +7,7 @@ metadata:
     via CI/CD integration.
 
   applications:
-    - factSheetId: b0db1f4e-ede6-4be7-87dc-0782a0c73ad8
+    - factSheetId: 2a8cafd8-c844-44da-a2ed-074816bb0758
 
   tags:
     - tagGroupName: Other tags
