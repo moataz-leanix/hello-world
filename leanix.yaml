@@ -5,6 +5,10 @@ metadata:
   description: |
     A demo microservice to showcase LeanIX self-built software discovery
     via CI/CD integration.
+  repository:
+    url: https://github.com/moataz-leanix/hello-world
+    status: active
+    visibility: public
 
   applications:
     - factSheetId: 2a8cafd8-c844-44da-a2ed-074816bb0758
